@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Operativo de Pedidos</title>
+
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --azul-oscuro: #0f2d52;
+      --azul-medio: #1d4f91;
+      --azul-claro: #2f80ed;
+      --blanco: #ffffff;
+      --fondo: #f4f7fb;
+      --gris: #6b7280;
+      --gris-claro: #e5e7eb;
+      --verde: #16a34a;
+      --amarillo: #f59e0b;
+      --rojo: #dc2626;
+      --sombra: 0 10px 25px rgba(15, 45, 82, 0.08);
+      --radio: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--fondo);
+      color: #111827;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--azul-oscuro), var(--azul-medio));
+      color: var(--blanco);
+      padding: 24px;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .titulo {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .subtitulo {
+      margin: 6px 0 0;
+      color: #dbeafe;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .panel {
+      background: var(--blanco);
+      border-radius: var(--radio);
+      box-shadow: var(--sombra);
+      padding: 20px;
+      margin-bottom: 22px;
+    }
+
+    .upload-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .botones {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    .file-label {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .file-label {
+      background: var(--azul-oscuro);
+      color: var(--blanco);
+    }
+
+    .file-label:hover {
+      background: var(--azul-medio);
+    }
+
+    .btn-secundario {
+      background: #eef4ff;
+      color: var(--azul-oscuro);
+    }
+
+    .btn-secundario:hover {
+      background: #dbeafe;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .estado-carga {
+      font-size: 14px;
+      color: var(--gris);
+      margin-top: 10px;
+    }
+
+    .estado-ok {
+      color: var(--verde);
+      font-weight: 700;
+    }
+
+    .estado-error {
+      color: var(--rojo);
+      font-weight: 700;
+    }
+
+    .grid-filtros {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--gris);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select,
+    input[type="date"],
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--gris-claro);
+      border-radius: 12px;
+      background: var(--blanco);
+      font-size: 14px;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--azul-claro);
+      box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.14);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--blanco);
+      border-radius: var(--radio);
+      box-shadow: var(--sombra);
+      padding: 18px;
+      border-left: 6px solid var(--azul-oscuro);
+      min-height: 112px;
+    }
+
+    .kpi-label {
+      color: var(--gris);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 900;
+      margin-top: 10px;
+      color: var(--azul-oscuro);
+    }
+
+    .kpi-note {
+      margin-top: 8px;
+      color: var(--gris);
+      font-size: 12px;
+    }
+
+    .kpi-warning {
+      border-left-color: var(--amarillo);
+    }
+
+    .kpi-danger {
+      border-left-color: var(--rojo);
+    }
+
+    .kpi-success {
+      border-left-color: var(--verde);
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .chart-card {
+      background: var(--blanco);
+      border-radius: var(--radio);
+      box-shadow: var(--sombra);
+      padding: 18px;
+      min-height: 260px;
+    }
+
+    .chart-card canvas {
+      display: block;
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    .chart-title {
+      margin: 0 0 12px;
+      color: var(--azul-oscuro);
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .tabla-seccion {
+      margin-bottom: 26px;
+    }
+
+    .tabla-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tabla-title {
+      margin: 0;
+      color: var(--azul-oscuro);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .tabla-controles {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tabla-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--gris-claro);
+      border-radius: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--blanco);
+      min-width: 900px;
+    }
+
+    th {
+      background: var(--azul-oscuro);
+      color: var(--blanco);
+      text-align: left;
+      padding: 12px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    th:hover {
+      background: var(--azul-medio);
+    }
+
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--gris-claro);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #f8fbff;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge-ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-neutral {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .paginacion {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .paginacion button {
+      background: #eef4ff;
+      color: var(--azul-oscuro);
+      padding: 8px 12px;
+    }
+
+    .paginacion button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .mensaje-vacio {
+      text-align: center;
+      color: var(--gris);
+      padding: 20px;
+      font-weight: 700;
+    }
+
+    .alerta {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #eff6ff;
+      color: var(--azul-oscuro);
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-filtros {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      main {
+        padding: 14px;
+      }
+
+      .titulo {
+        font-size: 22px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-filtros {
+        grid-template-columns: 1fr;
+      }
+
+      .upload-panel {
+        align-items: flex-start;
+      }
+
+      .botones {
+        width: 100%;
+      }
+
+      button,
+      .file-label {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-content">
+      <div>
+        <h1 class="titulo">Dashboard Operativo de Pedidos</h1>
+        <p class="subtitulo">Pedidos, reclamaciones y expediciones desde archivo Excel</p>
+      </div>
+      <div>
+        <strong>Customer Care Control Tower</strong>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel upload-panel">
+      <div>
+        <h2 style="margin:0;color:var(--azul-oscuro);">Carga de datos</h2>
+        <p style="margin:6px 0 0;color:var(--gris);">
+          Carga un archivo Excel con las hojas: Pedidos, Expedidos y Reclamaciones.
+        </p>
+        <div id="estadoCarga" class="estado-carga">
+          Ningún archivo cargado.
+        </div>
+      </div>
+
+      <div class="botones">
+        <label for="excelFile" class="file-label">
+          Cargar archivo Excel
+        </label>
+        <input id="excelFile" type="file" accept=".xlsx,.xls" />
+
+        <button class="btn-secundario" onclick="descargarPlantillaEjemplo()">
+          Descargar plantilla de ejemplo
+        </button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-top:0;color:var(--azul-oscuro);">Filtros dinámicos</h2>
+      <div class="grid-filtros">
+        <div class="campo">
+          <label for="filtroEstado">Estado</label>
+          <select id="filtroEstado">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="filtroComercial">Comercial</label>
+          <select id="filtroComercial">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="filtroCliente">Cliente</label>
+          <select id="filtroCliente">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="filtroFechaDesde">Fecha desde</label>
+          <input id="filtroFechaDesde" type="date" />
+        </div>
+
+        <div class="campo">
+          <label for="filtroFechaHasta">Fecha hasta</label>
+          <input id="filtroFechaHasta" type="date" />
+        </div>
+
+        <div class="campo" style="grid-column:1 / -1;">
+          <label for="busquedaLibre">Búsqueda libre</label>
+          <input id="busquedaLibre" type="text" placeholder="Buscar por pedido, cliente, comercial, estado, categoría..." />
+        </div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Pedidos Totales</div>
+        <div id="kpiPedidosTotales" class="kpi-value">0</div>
+        <div class="kpi-note">Pedidos filtrados</div>
+      </div>
+
+      <div class="kpi-card kpi-danger">
+        <div class="kpi-label">Pedidos Vencidos</div>
+        <div id="kpiPedidosVencidos" class="kpi-value">0</div>
+        <div class="kpi-note">Fecha entrega vencida</div>
+      </div>
+
+      <div class="kpi-card kpi-warning">
+        <div class="kpi-label">Facturas Pendientes</div>
+        <div id="kpiFacturasPendientes" class="kpi-value">0</div>
+        <div class="kpi-note">Pendientes de facturación</div>
+      </div>
+
+      <div class="kpi-card kpi-success">
+        <div class="kpi-label">Cargas Hoy</div>
+        <div id="kpiCargasHoy" class="kpi-value">0</div>
+        <div class="kpi-note">Expediciones del día</div>
+      </div>
+
+      <div class="kpi-card kpi-warning">
+        <div class="kpi-label">Próximos 5 días</div>
+        <div id="kpiProximos5Dias" class="kpi-value">0</div>
+        <div class="kpi-note">Entregas próximas</div>
+      </div>
+
+      <div class="kpi-card kpi-danger">
+        <div class="kpi-label">Pedidos Bloqueados</div>
+        <div id="kpiPedidosBloqueados" class="kpi-value">0</div>
+        <div class="kpi-note">Pedidos con bloqueo</div>
+      </div>
+
+      <div class="kpi-card kpi-warning">
+        <div class="kpi-label">Reclamaciones Abiertas</div>
+        <div id="kpiReclamacionesAbiertas" class="kpi-value">0</div>
+        <div class="kpi-note">Casos no cerrados</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Valor Total Reclamaciones</div>
+        <div id="kpiValorReclamaciones" class="kpi-value">0 €</div>
+        <div class="kpi-note">Importe filtrado</div>
+      </div>
+    </section>
+
+    <section class="charts-grid" style="margin-top:22px;">
+      <div class="chart-card">
+        <h3 class="chart-title">Estados de pedidos</h3>
+        <canvas id="chartEstadosPedidos"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Pedidos por comercial</h3>
+        <canvas id="chartPedidosComercial"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Reclamaciones por categoría</h3>
+        <canvas id="chartReclamacionesCategoria"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Evolución de cargas</h3>
+        <canvas id="chartEvolucionCargas"></canvas>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:22px;">
+      <div class="alerta">
+        Las tablas se ordenan haciendo clic en los encabezados. Los datos mostrados dependen del Excel cargado y de los filtros aplicados.
+      </div>
+
+      <div id="tablas"></div>
+    </section>
+  </main>
+
+  <script>
+    const estadoCarga = document.getElementById("estadoCarga");
+
+    let datosOriginales = {
+      pedidos: [],
+      expedidos: [],
+      reclamaciones: []
+    };
+
+    let datosFiltrados = {
+      pedidos: [],
+      expedidos: [],
+      reclamaciones: []
+    };
+
+    let charts = {};
+
+    const paginacion = {
+      pedidos: { pagina: 1, tamano: 10, ordenCampo: null, ordenAsc: true },
+      expedidos: { pagina: 1, tamano: 10, ordenCampo: null, ordenAsc: true },
+      reclamaciones: { pagina: 1, tamano: 10, ordenCampo: null, ordenAsc: true }
+    };
+
+    const colores = [
+      "#0f2d52",
+      "#1d4f91",
+      "#2f80ed",
+      "#16a34a",
+      "#f59e0b",
+      "#dc2626",
+      "#7c3aed",
+      "#0891b2",
+      "#64748b"
+    ];
+
+    document.getElementById("excelFile").addEventListener("change", cargarExcel);
+
+    [
+      "filtroEstado",
+      "filtroComercial",
+      "filtroCliente",
+      "filtroFechaDesde",
+      "filtroFechaHasta",
+      "busquedaLibre"
+    ].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        resetearPaginas();
+        aplicarFiltrosYRenderizar();
+      });
+    });
+
+    function cargarExcel(event) {
+      const archivo = event.target.files[0];
+
+      if (!archivo) return;
+
+      estadoCarga.innerHTML = "Leyendo archivo...";
+      estadoCarga.className = "estado-carga";
+
+      const lector = new FileReader();
+
+      lector.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array", cellDates: true });
+
+          validarHojas(workbook);
+
+          datosOriginales.pedidos = leerHoja(workbook, "Pedidos").map(normalizarPedido);
+          datosOriginales.expedidos = leerHoja(workbook, "Expedidos").map(normalizarExpedido);
+          datosOriginales.reclamaciones = leerHoja(workbook, "Reclamaciones").map(normalizarReclamacion);
+
+          construirFiltros();
+          resetearPaginas();
+          aplicarFiltrosYRenderizar();
+
+          estadoCarga.innerHTML =
+            `<span class="estado-ok">Archivo cargado correctamente.</span> ` +
+            `Pedidos: ${datosOriginales.pedidos.length} | ` +
+            `Expediciones: ${datosOriginales.expedidos.length} | ` +
+            `Reclamaciones: ${datosOriginales.reclamaciones.length}`;
+
+        } catch (error) {
+          console.error(error);
+          estadoCarga.innerHTML = `<span class="estado-error">${error.message}</span>`;
+        }
+      };
+
+      lector.readAsArrayBuffer(archivo);
+    }
+
+    function validarHojas(workbook) {
+      const requeridas = ["Pedidos", "Expedidos", "Reclamaciones"];
+      const faltantes = requeridas.filter(nombre => !workbook.SheetNames.includes(nombre));
+
+      if (faltantes.length > 0) {
+        throw new Error("Faltan hojas obligatorias: " + faltantes.join(", "));
+      }
+    }
+
+    function leerHoja(workbook, nombreHoja) {
+      const hoja = workbook.Sheets[nombreHoja];
+      return XLSX.utils.sheet_to_json(hoja, { defval: "" });
+    }
+
+    function valorFila(row, aliases) {
+      const keys = Object.keys(row);
+
+      for (const alias of aliases) {
+        const encontrado = keys.find(k =>
+          normalizarTexto(k) === normalizarTexto(alias)
+        );
+
+        if (encontrado !== undefined) {
+          return row[encontrado];
+        }
+      }
+
+      return "";
+    }
+
+    function normalizarPedido(row) {
+      return {
+        pedido: valorFila(row, ["Pedido", "Orden", "Order", "ON", "Nº Pedido", "Numero Pedido"]),
+        cliente: valorFila(row, ["Cliente", "Customer", "Nombre Cliente"]),
+        comercial: valorFila(row, ["Comercial", "Sales Rep", "Salesperson", "Vendedor"]),
+        estado: valorFila(row, ["Estado", "Status", "Estado Pedido"]),
+        fechaPedido: convertirFecha(valorFila(row, ["FechaPedido", "Fecha Pedido", "Order Date"])),
+        fechaEntrega: convertirFecha(valorFila(row, ["FechaEntrega", "Fecha Entrega", "Delivery Date", "ETD", "ETA"])),
+        importe: convertirNumero(valorFila(row, ["Importe", "Valor", "Amount", "Total"])),
+        facturaPendiente: normalizarSiNo(valorFila(row, ["FacturaPendiente", "Factura Pendiente", "Pending Invoice", "Invoice Pending"])),
+        bloqueado: normalizarSiNo(valorFila(row, ["Bloqueado", "Blocked", "Hold", "Credit Hold"]))
+      };
+    }
+
+    function normalizarExpedido(row) {
+      return {
+        pedido: valorFila(row, ["Pedido", "Orden", "Order", "ON", "Nº Pedido", "Numero Pedido"]),
+        fechaExpedicion: convertirFecha(valorFila(row, ["FechaExpedicion", "Fecha Expedicion", "Fecha Expedición", "Shipment Date", "Load Date"])),
+        transportista: valorFila(row, ["Transportista", "Carrier", "Forwarder"]),
+        estadoCarga: valorFila(row, ["EstadoCarga", "Estado Carga", "Estado", "Load Status", "Status"]),
+        cliente: valorFila(row, ["Cliente", "Customer", "Nombre Cliente"])
+      };
+    }
+
+    function normalizarReclamacion(row) {
+      return {
+        id: valorFila(row, ["ID", "Id", "Reclamacion", "Reclamación", "Claim ID"]),
+        cliente: valorFila(row, ["Cliente", "Customer", "Nombre Cliente"]),
+        categoria: valorFila(row, ["Categoria", "Categoría", "Category", "Tipo"]),
+        estado: valorFila(row, ["Estado", "Status", "Estado Reclamacion", "Estado Reclamación"]),
+        valor: convertirNumero(valorFila(row, ["Valor", "Importe", "Amount", "Claim Value"])),
+        fecha: convertirFecha(valorFila(row, ["Fecha", "Date", "Fecha Reclamacion", "Fecha Reclamación"]))
+      };
+    }
+
+    function convertirFecha(valor) {
+      if (!valor) return null;
+
+      if (valor instanceof Date && !isNaN(valor)) {
+        return limpiarFecha(valor);
+      }
+
+      if (typeof valor === "number") {
+        const fecha = XLSX.SSF.parse_date_code(valor);
+        if (!fecha) return null;
+        return new Date(fecha.y, fecha.m - 1, fecha.d);
+      }
+
+      const texto = String(valor).trim();
+
+      if (!texto) return null;
+
+      const formatos = [
+        /^(\d{4})-(\d{2})-(\d{2})$/,
+        /^(\d{2})\/(\d{2})\/(\d{4})$/,
+        /^(\d{2})-(\d{2})-(\d{4})$/
+      ];
+
+      let match = texto.match(formatos[0]);
+      if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+
+      match = texto.match(formatos[1]);
+      if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+
+      match = texto.match(formatos[2]);
+      if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+
+      const fecha = new Date(texto);
+      if (!isNaN(fecha)) return limpiarFecha(fecha);
+
+      return null;
+    }
+
+    function limpiarFecha(fecha) {
+      return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    }
+
+    function convertirNumero(valor) {
+      if (valor === null || valor === undefined || valor === "") return 0;
+
+      if (typeof valor === "number") return valor;
+
+      const texto = String(valor)
+        .replace(/\s/g, "")
+        .replace("€", "")
+        .replace("$", "")
+        .replace(/\./g, "")
+        .replace(",", ".");
+
+      const numero = Number(texto);
+      return isNaN(numero) ? 0 : numero;
+    }
+
+    function normalizarSiNo(valor) {
+      const texto = normalizarTexto(valor);
+      return ["si", "sí", "yes", "y", "true", "1", "blocked", "bloqueado"].includes(texto) ? "Sí" : "No";
+    }
+
+    function normalizarTexto(valor) {
+      return String(valor || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
+    function formatoFecha(fecha) {
+      if (!fecha) return "";
+      return fecha.toLocaleDateString("es-ES");
+    }
+
+    function formatoFechaISO(fecha) {
+      if (!fecha) return "";
+      const y = fecha.getFullYear();
+      const m = String(fecha.getMonth() + 1).padStart(2, "0");
+      const d = String(fecha.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatoMoneda(valor) {
+      return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0
+      }).format(valor || 0);
+    }
+
+    function construirFiltros() {
+      llenarSelect("filtroEstado", valoresUnicos([
+        ...datosOriginales.pedidos.map(x => x.estado),
+        ...datosOriginales.reclamaciones.map(x => x.estado),
+        ...datosOriginales.expedidos.map(x => x.estadoCarga)
+      ]));
+
+      llenarSelect("filtroComercial", valoresUnicos(datosOriginales.pedidos.map(x => x.comercial)));
+      llenarSelect("filtroCliente", valoresUnicos([
+        ...datosOriginales.pedidos.map(x => x.cliente),
+        ...datosOriginales.reclamaciones.map(x => x.cliente),
+        ...datosOriginales.expedidos.map(x => x.cliente)
+      ]));
+    }
+
+    function valoresUnicos(array) {
+      return [...new Set(array.filter(Boolean).map(x => String(x).trim()))].sort();
+    }
+
+    function llenarSelect(id, valores) {
+      const select = document.getElementById(id);
+      const valorActual = select.value;
+
+      select.innerHTML = `<option value="">Todos</option>`;
+
+      valores.forEach(valor => {
+        const option = document.createElement("option");
+        option.value = valor;
+        option.textContent = valor;
+        select.appendChild(option);
+      });
+
+      select.value = valorActual;
+    }
+
+    function aplicarFiltrosYRenderizar() {
+      const estado = normalizarTexto(document.getElementById("filtroEstado").value);
+      const comercial = normalizarTexto(document.getElementById("filtroComercial").value);
+      const cliente = normalizarTexto(document.getElementById("filtroCliente").value);
+      const fechaDesde = document.getElementById("filtroFechaDesde").value;
+      const fechaHasta = document.getElementById("filtroFechaHasta").value;
+      const busqueda = normalizarTexto(document.getElementById("busquedaLibre").value);
+
+      datosFiltrados.pedidos = datosOriginales.pedidos.filter(item => {
+        return cumpleEstado(item.estado, estado)
+          && cumpleTexto(item.comercial, comercial)
+          && cumpleTexto(item.cliente, cliente)
+          && cumpleFecha(item.fechaEntrega || item.fechaPedido, fechaDesde, fechaHasta)
+          && cumpleBusqueda(item, busqueda);
+      });
+
+      datosFiltrados.expedidos = datosOriginales.expedidos.filter(item => {
+        return cumpleEstado(item.estadoCarga, estado)
+          && cumpleTexto(item.cliente, cliente)
+          && cumpleFecha(item.fechaExpedicion, fechaDesde, fechaHasta)
+          && cumpleBusqueda(item, busqueda);
+      });
+
+      datosFiltrados.reclamaciones = datosOriginales.reclamaciones.filter(item => {
+        return cumpleEstado(item.estado, estado)
+          && cumpleTexto(item.cliente, cliente)
+          && cumpleFecha(item.fecha, fechaDesde, fechaHasta)
+          && cumpleBusqueda(item, busqueda);
+      });
+
+      actualizarKPIs();
+      renderizarGraficos();
+      renderizarTablas();
+    }
+
+    function cumpleEstado(valor, filtro) {
+      if (!filtro) return true;
+      return normalizarTexto(valor) === filtro;
+    }
+
+    function cumpleTexto(valor, filtro) {
+      if (!filtro) return true;
+      return normalizarTexto(valor) === filtro;
+    }
+
+    function cumpleFecha(fecha, desde, hasta) {
+      if (!desde && !hasta) return true;
+      if (!fecha) return false;
+
+      const fechaISO = formatoFechaISO(fecha);
+
+      if (desde && fechaISO < desde) return false;
+      if (hasta && fechaISO > hasta) return false;
+
+      return true;
+    }
+
+    function cumpleBusqueda(item, busqueda) {
+      if (!busqueda) return true;
+      return normalizarTexto(Object.values(item).join(" ")).includes(busqueda);
+    }
+
+    function actualizarKPIs() {
+      const hoy = limpiarFecha(new Date());
+      const cincoDias = new Date(hoy);
+      cincoDias.setDate(hoy.getDate() + 5);
+
+      const pedidos = datosFiltrados.pedidos;
+      const expedidos = datosFiltrados.expedidos;
+      const reclamaciones = datosFiltrados.reclamaciones;
+
+      const pedidosVencidos = pedidos.filter(p =>
+        p.fechaEntrega &&
+        p.fechaEntrega < hoy &&
+        normalizarTexto(p.estado) !== "completado" &&
+        normalizarTexto(p.estado) !== "cerrado" &&
+        normalizarTexto(p.estado) !== "entregado"
+      ).length;
+
+      const facturasPendientes = pedidos.filter(p => p.facturaPendiente === "Sí").length;
+
+      const cargasHoy = expedidos.filter(e =>
+        e.fechaExpedicion &&
+        formatoFechaISO(e.fechaExpedicion) === formatoFechaISO(hoy)
+      ).length;
+
+      const proximos5Dias = pedidos.filter(p =>
+        p.fechaEntrega &&
+        p.fechaEntrega >= hoy &&
+        p.fechaEntrega <= cincoDias
+      ).length;
+
+      const pedidosBloqueados = pedidos.filter(p => p.bloqueado === "Sí").length;
+
+      const reclamacionesAbiertas = reclamaciones.filter(r => {
+        const estado = normalizarTexto(r.estado);
+        return estado === "abierta" || estado === "open" || estado === "en progreso";
+      }).length;
+
+      const valorTotalReclamaciones = reclamaciones.reduce((sum, r) => sum + (r.valor || 0), 0);
+
+      document.getElementById("kpiPedidosTotales").textContent = pedidos.length;
+      document.getElementById("kpiPedidosVencidos").textContent = pedidosVencidos;
+      document.getElementById("kpiFacturasPendientes").textContent = facturasPendientes;
+      document.getElementById("kpiCargasHoy").textContent = cargasHoy;
+      document.getElementById("kpiProximos5Dias").textContent = proximos5Dias;
+      document.getElementById("kpiPedidosBloqueados").textContent = pedidosBloqueados;
+      document.getElementById("kpiReclamacionesAbiertas").textContent = reclamacionesAbiertas;
+      document.getElementById("kpiValorReclamaciones").textContent = formatoMoneda(valorTotalReclamaciones);
+    }
+
+    function agruparPor(array, campo) {
+      return array.reduce((acc, item) => {
+        const key = item[campo] || "Sin dato";
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function renderizarGraficos() {
+      crearGrafico(
+        "chartEstadosPedidos",
+        "doughnut",
+        agruparPor(datosFiltrados.pedidos, "estado"),
+        "Pedidos"
+      );
+
+      crearGrafico(
+        "chartPedidosComercial",
+        "bar",
+        agruparPor(datosFiltrados.pedidos, "comercial"),
+        "Pedidos"
+      );
+
+      crearGrafico(
+        "chartReclamacionesCategoria",
+        "pie",
+        agruparPor(datosFiltrados.reclamaciones, "categoria"),
+        "Reclamaciones"
+      );
+
+      crearGraficoEvolucionCargas();
+    }
+
+    function crearGrafico(canvasId, tipo, datos, etiqueta) {
+      if (charts[canvasId]) {
+        charts[canvasId].destroy();
+      }
+
+      const labels = Object.keys(datos);
+      const values = Object.values(datos);
+
+      const ctx = document.getElementById(canvasId);
+
+      charts[canvasId] = new Chart(ctx, {
+        type: tipo,
+        data: {
+          labels,
+          datasets: [{
+            label: etiqueta,
+            data: values,
+            backgroundColor: labels.map((_, i) => colores[i % colores.length]),
+            borderColor: "#ffffff",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: tipo === "bar" ? "top" : "bottom"
+            }
+          },
+          scales: tipo === "bar" ? {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          } : {}
+        }
+      });
+    }
+
+    function crearGraficoEvolucionCargas() {
+      const canvasId = "chartEvolucionCargas";
+
+      if (charts[canvasId]) {
+        charts[canvasId].destroy();
+      }
+
+      const agrupado = {};
+
+      datosFiltrados.expedidos.forEach(item => {
+        if (!item.fechaExpedicion) return;
+        const key = formatoFechaISO(item.fechaExpedicion);
+        agrupado[key] = (agrupado[key] || 0) + 1;
+      });
+
+      const labels = Object.keys(agrupado).sort();
+      const values = labels.map(label => agrupado[label]);
+
+      const ctx = document.getElementById(canvasId);
+
+      charts[canvasId] = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Cargas",
+            data: values,
+            borderColor: "#0f2d52",
+            backgroundColor: "rgba(47,128,237,0.16)",
+            tension: 0.35,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: "#0f2d52"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "top"
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderizarTablas() {
+      const contenedor = document.getElementById("tablas");
+
+      contenedor.innerHTML = `
+        ${crearSeccionTabla(
+          "pedidos",
+          "Pedidos",
+          datosFiltrados.pedidos,
+          [
+            ["pedido", "Pedido"],
+            ["cliente", "Cliente"],
+            ["comercial", "Comercial"],
+            ["estado", "Estado"],
+            ["fechaPedido", "Fecha pedido"],
+            ["fechaEntrega", "Fecha entrega"],
+            ["importe", "Importe"],
+            ["facturaPendiente", "Factura pendiente"],
+            ["bloqueado", "Bloqueado"]
+          ]
+        )}
+
+        ${crearSeccionTabla(
+          "expedidos",
+          "Expedidos",
+          datosFiltrados.expedidos,
+          [
+            ["pedido", "Pedido"],
+            ["cliente", "Cliente"],
+            ["fechaExpedicion", "Fecha expedición"],
+            ["transportista", "Transportista"],
+            ["estadoCarga", "Estado carga"]
+          ]
+        )}
+
+        ${crearSeccionTabla(
+          "reclamaciones",
+          "Reclamaciones",
+          datosFiltrados.reclamaciones,
+          [
+            ["id", "ID"],
+            ["cliente", "Cliente"],
+            ["categoria", "Categoría"],
+            ["estado", "Estado"],
+            ["valor", "Valor"],
+            ["fecha", "Fecha"]
+          ]
+        )}
+      `;
+    }
+
+    function crearSeccionTabla(tipo, titulo, data, columnas) {
+      const config = paginacion[tipo];
+
+      let datosOrdenados = [...data];
+
+      if (config.ordenCampo) {
+        datosOrdenados.sort((a, b) => comparar(a[config.ordenCampo], b[config.ordenCampo], config.ordenAsc));
+      }
+
+      const totalPaginas = Math.max(1, Math.ceil(datosOrdenados.length / config.tamano));
+      config.pagina = Math.min(config.pagina, totalPaginas);
+
+      const inicio = (config.pagina - 1) * config.tamano;
+      const paginaDatos = datosOrdenados.slice(inicio, inicio + config.tamano);
+
+      const filas = paginaDatos.length
+        ? paginaDatos.map(item => `
+            <tr>
+              ${columnas.map(([campo]) => `<td>${formatearCelda(campo, item[campo])}</td>`).join("")}
+            </tr>
+          `).join("")
+        : `<tr><td colspan="${columnas.length}" class="mensaje-vacio">No hay datos para mostrar</td></tr>`;
+
+      return `
+        <div class="tabla-seccion">
+          <div class="tabla-header">
+            <h3 class="tabla-title">${titulo}</h3>
+            <div class="tabla-controles">
+              <span style="color:var(--gris);font-size:13px;">Registros: ${data.length}</span>
+              <button class="btn-secundario" onclick="exportarCSV('${tipo}')">Exportar CSV</button>
+            </div>
+          </div>
+
+          <div class="tabla-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  ${columnas.map(([campo, label]) => `
+                    <th onclick="ordenarTabla('${tipo}', '${campo}')">
+                      ${label} ${config.ordenCampo === campo ? (config.ordenAsc ? "▲" : "▼") : ""}
+                    </th>
+                  `).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${filas}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="paginacion">
+            <button onclick="cambiarPagina('${tipo}', -1)" ${config.pagina <= 1 ? "disabled" : ""}>Anterior</button>
+            <span style="font-size:13px;color:var(--gris);">
+              Página ${config.pagina} de ${totalPaginas}
+            </span>
+            <button onclick="cambiarPagina('${tipo}', 1)" ${config.pagina >= totalPaginas ? "disabled" : ""}>Siguiente</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function comparar(a, b, asc) {
+      const valorA = a instanceof Date ? a.getTime() : String(a ?? "").toLowerCase();
+      const valorB = b instanceof Date ? b.getTime() : String(b ?? "").toLowerCase();
+
+      if (valorA < valorB) return asc ? -1 : 1;
+      if (valorA > valorB) return asc ? 1 : -1;
+      return 0;
+    }
+
+    function formatearCelda(campo, valor) {
+      if (valor instanceof Date) return formatoFecha(valor);
+
+      if (campo === "importe" || campo === "valor") {
+        return formatoMoneda(valor);
+      }
+
+      if (campo === "estado" || campo === "estadoCarga") {
+        return crearBadge(valor);
+      }
+
+      if (campo === "facturaPendiente" || campo === "bloqueado") {
+        return crearBadge(valor);
+      }
+
+      return escaparHTML(valor || "");
+    }
+
+    function crearBadge(valor) {
+      const texto = String(valor || "Sin dato");
+      const normalizado = normalizarTexto(texto);
+
+      let clase = "badge-neutral";
+
+      if (["completado", "entregado", "cerrado", "facturado", "no"].includes(normalizado)) {
+        clase = "badge-ok";
+      }
+
+      if (["pendiente", "en progreso", "abierta", "sí", "si", "parcial"].includes(normalizado)) {
+        clase = "badge-warning";
+      }
+
+      if (["vencido", "bloqueado", "error", "rechazado", "cancelado"].includes(normalizado)) {
+        clase = "badge-danger";
+      }
+
+      return `<span class="badge ${clase}">${escaparHTML(texto)}</span>`;
+    }
+
+    function escaparHTML(valor) {
+      return String(valor)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function ordenarTabla(tipo, campo) {
+      const config = paginacion[tipo];
+
+      if (config.ordenCampo === campo) {
+        config.ordenAsc = !config.ordenAsc;
+      } else {
+        config.ordenCampo = campo;
+        config.ordenAsc = true;
+      }
+
+      renderizarTablas();
+    }
+
+    function cambiarPagina(tipo, delta) {
+      paginacion[tipo].pagina += delta;
+      renderizarTablas();
+    }
+
+    function resetearPaginas() {
+      Object.keys(paginacion).forEach(tipo => {
+        paginacion[tipo].pagina = 1;
+      });
+    }
+
+    function exportarCSV(tipo) {
+      const datos = datosFiltrados[tipo];
+
+      if (!datos.length) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+
+      const columnas = Object.keys(datos[0]);
+
+      const csv = [
+        columnas.join(";"),
+        ...datos.map(row =>
+          columnas.map(col => {
+            const valor = row[col] instanceof Date ? formatoFecha(row[col]) : row[col];
+            return `"${String(valor ?? "").replaceAll('"', '""')}"`
+          }).join(";")
+        )
+      ].join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${tipo}.csv`;
+      link.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function descargarPlantillaEjemplo() {
+      const pedidos = [
+        {
+          Pedido: "ON 91315",
+          Cliente: "NYO3 International AS",
+          Comercial: "Ana García",
+          Estado: "Pendiente",
+          FechaPedido: "2026-08-15",
+          FechaEntrega: "2026-08-22",
+          Importe: 12500,
+          FacturaPendiente: "Sí",
+          Bloqueado: "No"
+        },
+        {
+          Pedido: "ON 91316",
+          Cliente: "Brenntag",
+          Comercial: "Luis Pérez",
+          Estado: "Completado",
+          FechaPedido: "2026-08-10",
+          FechaEntrega: "2026-08-18",
+          Importe: 9800,
+          FacturaPendiente: "No",
+          Bloqueado: "No"
+        },
+        {
+          Pedido: "ON 91317",
+          Cliente: "Sport Research",
+          Comercial: "Ana García",
+          Estado: "Bloqueado",
+          FechaPedido: "2026-08-05",
+          FechaEntrega: "2026-08-17",
+          Importe: 45000,
+          FacturaPendiente: "Sí",
+          Bloqueado: "Sí"
+        }
+      ];
+
+      const expedidos = [
+        {
+          Pedido: "ON 91316",
+          Cliente: "Brenntag",
+          FechaExpedicion: "2026-08-18",
+          Transportista: "Kreglinger",
+          EstadoCarga: "Entregado"
+        },
+        {
+          Pedido: "ON 91318",
+          Cliente: "Cliente Ejemplo",
+          FechaExpedicion: formatoFechaISO(new Date()),
+          Transportista: "Mainfreight",
+          EstadoCarga: "En tránsito"
+        }
+      ];
+
+      const reclamaciones = [
+        {
+          ID: "CLM-001",
+          Cliente: "Brenntag",
+          Categoria: "Documentación",
+          Estado: "Abierta",
+          Valor: 1500,
+          Fecha: "2026-08-18"
+        },
+        {
+          ID: "CLM-002",
+          Cliente: "Sport Research",
+          Categoria: "Retraso",
+          Estado: "Cerrada",
+          Valor: 3200,
+          Fecha: "2026-08-12"
+        }
+      ];
+
+      const wb = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pedidos), "Pedidos");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expedidos), "Expedidos");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reclamaciones), "Reclamaciones");
+
+      XLSX.writeFile(wb, "plantilla-dashboard-pedidos.xlsx");
+    }
+
+    renderizarTablas();
+    actualizarKPIs();
+    renderizarGraficos();
+  </script>
+</body>
+</html>
