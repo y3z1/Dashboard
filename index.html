@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Operativo de Pedidos</title>
+  <title>Order Operations Dashboard</title>
 
   <!-- SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -13,18 +13,31 @@
 
   <style>
     :root {
-      --azul-oscuro: #0f2d52;
-      --azul-medio: #1d4f91;
-      --azul-claro: #2f80ed;
+      --bg: #070b18;
+      --bg-2: #0b1122;
+      --surface: #0f1730;
+      --surface-2: #16203f;
+      --border: #24325c;
+      --text: #e9edfb;
+      --gris: #9aa6c9;
+      --azul-oscuro: #38bdf8;
+      --azul-medio: #6366f1;
+      --azul-claro: #22d3ee;
       --blanco: #ffffff;
-      --fondo: #f4f7fb;
-      --gris: #6b7280;
-      --gris-claro: #e5e7eb;
-      --verde: #16a34a;
-      --amarillo: #f59e0b;
-      --rojo: #dc2626;
-      --sombra: 0 10px 25px rgba(15, 45, 82, 0.08);
+      --cyan: #22d3ee;
+      --blue: #6366f1;
+      --purple: #a855f7;
+      --verde: #34d399;
+      --amarillo: #fbbf24;
+      --rojo: #fb7185;
       --radio: 18px;
+      --sombra: 0 18px 40px rgba(0, 0, 0, 0.55);
+      --glow-cyan: 0 0 18px rgba(34, 211, 238, 0.5);
+      --glow-blue: 0 0 18px rgba(99, 102, 241, 0.5);
+      --glow-purple: 0 0 18px rgba(168, 85, 247, 0.5);
+      --glow-green: 0 0 18px rgba(52, 211, 153, 0.45);
+      --glow-amber: 0 0 18px rgba(251, 191, 36, 0.45);
+      --glow-red: 0 0 18px rgba(251, 113, 133, 0.5);
     }
 
     * {
@@ -34,14 +47,33 @@
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: var(--fondo);
-      color: #111827;
+      background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+        radial-gradient(1000px 500px at 100% 0%, rgba(34, 211, 238, 0.14), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(168, 85, 247, 0.14), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
-      background: linear-gradient(135deg, var(--azul-oscuro), var(--azul-medio));
-      color: var(--blanco);
+      background: linear-gradient(135deg, rgba(15, 23, 48, 0.92), rgba(11, 17, 34, 0.85));
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
       padding: 24px;
+      position: relative;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--blue));
+      box-shadow: var(--glow-cyan);
     }
 
     .header-content {
@@ -54,15 +86,23 @@
       flex-wrap: wrap;
     }
 
+    .header-content strong {
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
+    }
+
     .titulo {
       margin: 0;
       font-size: 28px;
       font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.2px;
+      text-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
     }
 
     .subtitulo {
       margin: 6px 0 0;
-      color: #dbeafe;
+      color: #b7c2e6;
       font-size: 14px;
     }
 
@@ -73,7 +113,8 @@
     }
 
     .panel {
-      background: var(--blanco);
+      background: linear-gradient(180deg, var(--surface), var(--bg-2));
+      border: 1px solid var(--border);
       border-radius: var(--radio);
       box-shadow: var(--sombra);
       padding: 20px;
@@ -101,7 +142,7 @@
       padding: 12px 18px;
       font-weight: 700;
       cursor: pointer;
-      transition: 0.2s ease;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -109,21 +150,26 @@
     }
 
     .file-label {
-      background: var(--azul-oscuro);
-      color: var(--blanco);
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      color: #04121f;
+      box-shadow: var(--glow-cyan);
     }
 
     .file-label:hover {
-      background: var(--azul-medio);
+      transform: translateY(-1px);
+      box-shadow: 0 0 26px rgba(34, 211, 238, 0.75);
     }
 
     .btn-secundario {
-      background: #eef4ff;
-      color: var(--azul-oscuro);
+      background: rgba(99, 102, 241, 0.12);
+      color: #cdd7ff;
+      border: 1px solid var(--border);
     }
 
     .btn-secundario:hover {
-      background: #dbeafe;
+      background: rgba(99, 102, 241, 0.22);
+      box-shadow: var(--glow-blue);
+      color: #ffffff;
     }
 
     input[type="file"] {
@@ -139,11 +185,13 @@
     .estado-ok {
       color: var(--verde);
       font-weight: 700;
+      text-shadow: var(--glow-green);
     }
 
     .estado-error {
       color: var(--rojo);
       font-weight: 700;
+      text-shadow: var(--glow-red);
     }
 
     .grid-filtros {
@@ -171,17 +219,28 @@
     input[type="text"] {
       width: 100%;
       padding: 11px 12px;
-      border: 1px solid var(--gris-claro);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      background: var(--blanco);
+      background: var(--surface-2);
+      color: var(--text);
       font-size: 14px;
       outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    select option {
+      background: var(--surface-2);
+      color: var(--text);
     }
 
     select:focus,
     input:focus {
-      border-color: var(--azul-claro);
-      box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.14);
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18), var(--glow-cyan);
+    }
+
+    ::placeholder {
+      color: #7f8bb0;
     }
 
     .kpi-grid {
@@ -191,12 +250,45 @@
     }
 
     .kpi-card {
-      background: var(--blanco);
+      background: linear-gradient(180deg, var(--surface), var(--bg-2));
+      border: 1px solid var(--border);
       border-radius: var(--radio);
       box-shadow: var(--sombra);
       padding: 18px;
-      border-left: 6px solid var(--azul-oscuro);
+      border-left: 4px solid var(--cyan);
       min-height: 112px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--cyan);
+      box-shadow: var(--glow-cyan);
+      animation: kpiGlow 2.6s ease-in-out infinite;
+    }
+
+    @keyframes kpiGlow {
+      0%, 100% {
+        opacity: 0.55;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .kpi-card:nth-child(even)::before {
+      animation-delay: 1.3s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
     }
 
     .kpi-label {
@@ -211,7 +303,9 @@
       font-size: 32px;
       font-weight: 900;
       margin-top: 10px;
-      color: var(--azul-oscuro);
+      color: #ffffff;
+      text-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+      font-variant-numeric: tabular-nums;
     }
 
     .kpi-note {
@@ -224,12 +318,39 @@
       border-left-color: var(--amarillo);
     }
 
+    .kpi-warning::before {
+      background: var(--amarillo);
+      box-shadow: var(--glow-amber);
+    }
+
+    .kpi-warning .kpi-value {
+      text-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
+    }
+
     .kpi-danger {
       border-left-color: var(--rojo);
     }
 
+    .kpi-danger::before {
+      background: var(--rojo);
+      box-shadow: var(--glow-red);
+    }
+
+    .kpi-danger .kpi-value {
+      text-shadow: 0 0 16px rgba(251, 113, 133, 0.5);
+    }
+
     .kpi-success {
       border-left-color: var(--verde);
+    }
+
+    .kpi-success::before {
+      background: var(--verde);
+      box-shadow: var(--glow-green);
+    }
+
+    .kpi-success .kpi-value {
+      text-shadow: 0 0 16px rgba(52, 211, 153, 0.45);
     }
 
     .charts-grid {
@@ -239,7 +360,8 @@
     }
 
     .chart-card {
-      background: var(--blanco);
+      background: linear-gradient(180deg, var(--surface), var(--bg-2));
+      border: 1px solid var(--border);
       border-radius: var(--radio);
       box-shadow: var(--sombra);
       padding: 18px;
@@ -254,7 +376,7 @@
 
     .chart-title {
       margin: 0 0 12px;
-      color: var(--azul-oscuro);
+      color: #ffffff;
       font-size: 17px;
       font-weight: 800;
     }
@@ -274,9 +396,10 @@
 
     .tabla-title {
       margin: 0;
-      color: var(--azul-oscuro);
+      color: #ffffff;
       font-size: 18px;
       font-weight: 900;
+      text-shadow: 0 0 14px rgba(99, 102, 241, 0.4);
     }
 
     .tabla-controles {
@@ -288,41 +411,45 @@
 
     .tabla-wrapper {
       overflow-x: auto;
-      border: 1px solid var(--gris-claro);
+      border: 1px solid var(--border);
       border-radius: 14px;
+      background: var(--surface);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--blanco);
+      background: transparent;
       min-width: 900px;
     }
 
     th {
-      background: var(--azul-oscuro);
-      color: var(--blanco);
+      background: linear-gradient(180deg, rgba(34, 211, 238, 0.16), rgba(99, 102, 241, 0.10));
+      color: #eaf6ff;
       text-align: left;
       padding: 12px;
       font-size: 13px;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.18s ease;
     }
 
     th:hover {
-      background: var(--azul-medio);
+      background: linear-gradient(180deg, rgba(34, 211, 238, 0.28), rgba(99, 102, 241, 0.18));
     }
 
     td {
       padding: 11px 12px;
-      border-bottom: 1px solid var(--gris-claro);
+      border-bottom: 1px solid rgba(36, 50, 92, 0.6);
       font-size: 13px;
       white-space: nowrap;
+      color: var(--text);
     }
 
     tr:hover td {
-      background: #f8fbff;
+      background: rgba(99, 102, 241, 0.10);
     }
 
     .badge {
@@ -331,26 +458,34 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: 800;
+      border: 1px solid transparent;
     }
 
     .badge-ok {
-      background: #dcfce7;
-      color: #166534;
+      background: rgba(52, 211, 153, 0.14);
+      color: #6ee7b7;
+      border-color: rgba(52, 211, 153, 0.4);
+      box-shadow: var(--glow-green);
     }
 
     .badge-warning {
-      background: #fef3c7;
-      color: #92400e;
+      background: rgba(251, 191, 36, 0.14);
+      color: #fcd34d;
+      border-color: rgba(251, 191, 36, 0.4);
+      box-shadow: var(--glow-amber);
     }
 
     .badge-danger {
-      background: #fee2e2;
-      color: #991b1b;
+      background: rgba(251, 113, 133, 0.14);
+      color: #fda4af;
+      border-color: rgba(251, 113, 133, 0.4);
+      box-shadow: var(--glow-red);
     }
 
     .badge-neutral {
-      background: #e5e7eb;
-      color: #374151;
+      background: rgba(148, 163, 184, 0.14);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, 0.35);
     }
 
     .paginacion {
@@ -363,13 +498,19 @@
     }
 
     .paginacion button {
-      background: #eef4ff;
-      color: var(--azul-oscuro);
+      background: rgba(99, 102, 241, 0.12);
+      color: #cdd7ff;
+      border: 1px solid var(--border);
       padding: 8px 12px;
     }
 
+    .paginacion button:hover:not(:disabled) {
+      box-shadow: var(--glow-blue);
+      color: #ffffff;
+    }
+
     .paginacion button:disabled {
-      opacity: 0.45;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
@@ -383,8 +524,9 @@
     .alerta {
       padding: 14px 16px;
       border-radius: 14px;
-      background: #eff6ff;
-      color: var(--azul-oscuro);
+      background: rgba(34, 211, 238, 0.08);
+      border: 1px solid rgba(34, 211, 238, 0.28);
+      color: #bfeeff;
       font-size: 14px;
       margin-top: 12px;
     }
@@ -434,6 +576,13 @@
         justify-content: center;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -441,8 +590,8 @@
   <header>
     <div class="header-content">
       <div>
-        <h1 class="titulo">Dashboard Operativo de Pedidos</h1>
-        <p class="subtitulo">Pedidos, reclamaciones y expediciones desde archivo Excel</p>
+        <h1 class="titulo">Order Operations Dashboard</h1>
+        <p class="subtitulo">Orders, claims and shipments from an Excel file</p>
       </div>
       <div>
         <strong>Customer Care Control Tower</strong>
@@ -453,143 +602,143 @@
   <main>
     <section class="panel upload-panel">
       <div>
-        <h2 style="margin:0;color:var(--azul-oscuro);">Carga de datos</h2>
+        <h2 style="margin:0;color:var(--azul-oscuro);">Data upload</h2>
         <p style="margin:6px 0 0;color:var(--gris);">
-          Carga un archivo Excel con las hojas: Pedidos, Expedidos y Reclamaciones.
+          Upload an Excel file with the sheets: Pedidos, Expedidos and Reclamaciones.
         </p>
         <div id="estadoCarga" class="estado-carga">
-          Ningún archivo cargado.
+          No file loaded.
         </div>
       </div>
 
       <div class="botones">
         <label for="excelFile" class="file-label">
-          Cargar archivo Excel
+          Load Excel file
         </label>
         <input id="excelFile" type="file" accept=".xlsx,.xls" />
 
         <button class="btn-secundario" onclick="descargarPlantillaEjemplo()">
-          Descargar plantilla de ejemplo
+          Download sample template
         </button>
       </div>
     </section>
 
     <section class="panel">
-      <h2 style="margin-top:0;color:var(--azul-oscuro);">Filtros dinámicos</h2>
+      <h2 style="margin-top:0;color:var(--azul-oscuro);">Dynamic filters</h2>
       <div class="grid-filtros">
         <div class="campo">
-          <label for="filtroEstado">Estado</label>
+          <label for="filtroStatus">Estado</label>
           <select id="filtroEstado">
-            <option value="">Todos</option>
+            <option value="">All</option>
           </select>
         </div>
 
         <div class="campo">
-          <label for="filtroComercial">Comercial</label>
+          <label for="filtroSales rep">Comercial</label>
           <select id="filtroComercial">
-            <option value="">Todos</option>
+            <option value="">All</option>
           </select>
         </div>
 
         <div class="campo">
-          <label for="filtroCliente">Cliente</label>
+          <label for="filtroCustomer">Cliente</label>
           <select id="filtroCliente">
-            <option value="">Todos</option>
+            <option value="">All</option>
           </select>
         </div>
 
         <div class="campo">
-          <label for="filtroFechaDesde">Fecha desde</label>
+          <label for="filtroFechaDesde">Date from</label>
           <input id="filtroFechaDesde" type="date" />
         </div>
 
         <div class="campo">
-          <label for="filtroFechaHasta">Fecha hasta</label>
+          <label for="filtroFechaHasta">Date to</label>
           <input id="filtroFechaHasta" type="date" />
         </div>
 
         <div class="campo" style="grid-column:1 / -1;">
-          <label for="busquedaLibre">Búsqueda libre</label>
-          <input id="busquedaLibre" type="text" placeholder="Buscar por pedido, cliente, comercial, estado, categoría..." />
+          <label for="busquedaLibre">Free search</label>
+          <input id="busquedaLibre" type="text" placeholder="Search by order, customer, sales rep, status, category..." />
         </div>
       </div>
     </section>
 
     <section class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Pedidos Totales</div>
+        <div class="kpi-label">Total Orders</div>
         <div id="kpiPedidosTotales" class="kpi-value">0</div>
-        <div class="kpi-note">Pedidos filtrados</div>
+        <div class="kpi-note">Filtered orders</div>
       </div>
 
       <div class="kpi-card kpi-danger">
-        <div class="kpi-label">Pedidos Vencidos</div>
+        <div class="kpi-label">Overdue Orders</div>
         <div id="kpiPedidosVencidos" class="kpi-value">0</div>
-        <div class="kpi-note">Fecha entrega vencida</div>
+        <div class="kpi-note">Delivery date passed</div>
       </div>
 
       <div class="kpi-card kpi-warning">
-        <div class="kpi-label">Facturas Pendientes</div>
+        <div class="kpi-label">Pending Invoices</div>
         <div id="kpiFacturasPendientes" class="kpi-value">0</div>
-        <div class="kpi-note">Pendientes de facturación</div>
+        <div class="kpi-note">Pending invoicing</div>
       </div>
 
       <div class="kpi-card kpi-success">
-        <div class="kpi-label">Cargas Hoy</div>
+        <div class="kpi-label">Shipments Today</div>
         <div id="kpiCargasHoy" class="kpi-value">0</div>
-        <div class="kpi-note">Expediciones del día</div>
+        <div class="kpi-note">Today's shipments</div>
       </div>
 
       <div class="kpi-card kpi-warning">
-        <div class="kpi-label">Próximos 5 días</div>
+        <div class="kpi-label">Next 5 days</div>
         <div id="kpiProximos5Dias" class="kpi-value">0</div>
-        <div class="kpi-note">Entregas próximas</div>
+        <div class="kpi-note">Upcoming deliveries</div>
       </div>
 
       <div class="kpi-card kpi-danger">
-        <div class="kpi-label">Pedidos Bloqueados</div>
+        <div class="kpi-label">Blocked Orders</div>
         <div id="kpiPedidosBloqueados" class="kpi-value">0</div>
-        <div class="kpi-note">Pedidos con bloqueo</div>
+        <div class="kpi-note">Orders on hold</div>
       </div>
 
       <div class="kpi-card kpi-warning">
-        <div class="kpi-label">Reclamaciones Abiertas</div>
+        <div class="kpi-label">Open Claims</div>
         <div id="kpiReclamacionesAbiertas" class="kpi-value">0</div>
-        <div class="kpi-note">Casos no cerrados</div>
+        <div class="kpi-note">Unclosed cases</div>
       </div>
 
       <div class="kpi-card">
-        <div class="kpi-label">Valor Total Reclamaciones</div>
+        <div class="kpi-label">Total Claims Value</div>
         <div id="kpiValorReclamaciones" class="kpi-value">0 €</div>
-        <div class="kpi-note">Importe filtrado</div>
+        <div class="kpi-note">Filtered amount</div>
       </div>
     </section>
 
     <section class="charts-grid" style="margin-top:22px;">
       <div class="chart-card">
-        <h3 class="chart-title">Estados de pedidos</h3>
+        <h3 class="chart-title">Order statuses</h3>
         <canvas id="chartEstadosPedidos"></canvas>
       </div>
 
       <div class="chart-card">
-        <h3 class="chart-title">Pedidos por comercial</h3>
+        <h3 class="chart-title">Orders by sales rep</h3>
         <canvas id="chartPedidosComercial"></canvas>
       </div>
 
       <div class="chart-card">
-        <h3 class="chart-title">Reclamaciones por categoría</h3>
+        <h3 class="chart-title">Claims by category</h3>
         <canvas id="chartReclamacionesCategoria"></canvas>
       </div>
 
       <div class="chart-card">
-        <h3 class="chart-title">Evolución de cargas</h3>
+        <h3 class="chart-title">Shipments over time</h3>
         <canvas id="chartEvolucionCargas"></canvas>
       </div>
     </section>
 
     <section class="panel" style="margin-top:22px;">
       <div class="alerta">
-        Las tablas se ordenan haciendo clic en los encabezados. Los datos mostrados dependen del Excel cargado y de los filtros aplicados.
+        Sort the tables by clicking the headers. The data shown depends on the loaded Excel file and the applied filters.
       </div>
 
       <div id="tablas"></div>
@@ -613,6 +762,12 @@
 
     let charts = {};
 
+    if (window.Chart) {
+      Chart.defaults.color = "#c3cdf0";
+      Chart.defaults.borderColor = "rgba(99, 130, 200, 0.18)";
+      Chart.defaults.font.family = "Arial, Helvetica, sans-serif";
+    }
+
     const paginacion = {
       pedidos: { pagina: 1, tamano: 10, ordenCampo: null, ordenAsc: true },
       expedidos: { pagina: 1, tamano: 10, ordenCampo: null, ordenAsc: true },
@@ -620,15 +775,15 @@
     };
 
     const colores = [
-      "#0f2d52",
-      "#1d4f91",
-      "#2f80ed",
-      "#16a34a",
-      "#f59e0b",
-      "#dc2626",
-      "#7c3aed",
-      "#0891b2",
-      "#64748b"
+      "#22d3ee",
+      "#6366f1",
+      "#a855f7",
+      "#34d399",
+      "#fbbf24",
+      "#fb7185",
+      "#38bdf8",
+      "#f472b6",
+      "#94a3b8"
     ];
 
     document.getElementById("excelFile").addEventListener("change", cargarExcel);
@@ -652,7 +807,7 @@
 
       if (!archivo) return;
 
-      estadoCarga.innerHTML = "Leyendo archivo...";
+      estadoCarga.innerHTML = "Reading file...";
       estadoCarga.className = "estado-carga";
 
       const lector = new FileReader();
@@ -673,10 +828,10 @@
           aplicarFiltrosYRenderizar();
 
           estadoCarga.innerHTML =
-            `<span class="estado-ok">Archivo cargado correctamente.</span> ` +
-            `Pedidos: ${datosOriginales.pedidos.length} | ` +
-            `Expediciones: ${datosOriginales.expedidos.length} | ` +
-            `Reclamaciones: ${datosOriginales.reclamaciones.length}`;
+            `<span class="estado-ok">File loaded successfully.</span> ` +
+            `Orders: ${datosOriginales.pedidos.length} | ` +
+            `Shipments: ${datosOriginales.expedidos.length} | ` +
+            `Claims: ${datosOriginales.reclamaciones.length}`;
 
         } catch (error) {
           console.error(error);
@@ -692,7 +847,7 @@
       const faltantes = requeridas.filter(nombre => !workbook.SheetNames.includes(nombre));
 
       if (faltantes.length > 0) {
-        throw new Error("Faltan hojas obligatorias: " + faltantes.join(", "));
+        throw new Error("Missing required sheets: " + faltantes.join(", "));
       }
     }
 
@@ -812,7 +967,7 @@
 
     function normalizarSiNo(valor) {
       const texto = normalizarTexto(valor);
-      return ["si", "sí", "yes", "y", "true", "1", "blocked", "bloqueado"].includes(texto) ? "Sí" : "No";
+      return ["si", "sí", "yes", "y", "true", "1", "blocked", "bloqueado"].includes(texto) ? "Yes" : "No";
     }
 
     function normalizarTexto(valor) {
@@ -825,7 +980,7 @@
 
     function formatoFecha(fecha) {
       if (!fecha) return "";
-      return fecha.toLocaleDateString("es-ES");
+      return fecha.toLocaleDateString("en-GB");
     }
 
     function formatoFechaISO(fecha) {
@@ -837,7 +992,7 @@
     }
 
     function formatoMoneda(valor) {
-      return new Intl.NumberFormat("es-ES", {
+      return new Intl.NumberFormat("en-GB", {
         style: "currency",
         currency: "EUR",
         maximumFractionDigits: 0
@@ -867,7 +1022,7 @@
       const select = document.getElementById(id);
       const valorActual = select.value;
 
-      select.innerHTML = `<option value="">Todos</option>`;
+      select.innerHTML = `<option value="">All</option>`;
 
       valores.forEach(valor => {
         const option = document.createElement("option");
@@ -958,7 +1113,7 @@
         normalizarTexto(p.estado) !== "entregado"
       ).length;
 
-      const facturasPendientes = pedidos.filter(p => p.facturaPendiente === "Sí").length;
+      const facturasPendientes = pedidos.filter(p => p.facturaPendiente === "Yes").length;
 
       const cargasHoy = expedidos.filter(e =>
         e.fechaExpedicion &&
@@ -971,7 +1126,7 @@
         p.fechaEntrega <= cincoDias
       ).length;
 
-      const pedidosBloqueados = pedidos.filter(p => p.bloqueado === "Sí").length;
+      const pedidosBloqueados = pedidos.filter(p => p.bloqueado === "Yes").length;
 
       const reclamacionesAbiertas = reclamaciones.filter(r => {
         const estado = normalizarTexto(r.estado);
@@ -992,7 +1147,7 @@
 
     function agruparPor(array, campo) {
       return array.reduce((acc, item) => {
-        const key = item[campo] || "Sin dato";
+        const key = item[campo] || "No data";
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {});
@@ -1003,21 +1158,21 @@
         "chartEstadosPedidos",
         "doughnut",
         agruparPor(datosFiltrados.pedidos, "estado"),
-        "Pedidos"
+        "Orders"
       );
 
       crearGrafico(
         "chartPedidosComercial",
         "bar",
         agruparPor(datosFiltrados.pedidos, "comercial"),
-        "Pedidos"
+        "Orders"
       );
 
       crearGrafico(
         "chartReclamacionesCategoria",
         "pie",
         agruparPor(datosFiltrados.reclamaciones, "categoria"),
-        "Reclamaciones"
+        "Claims"
       );
 
       crearGraficoEvolucionCargas();
@@ -1090,14 +1245,14 @@
         data: {
           labels,
           datasets: [{
-            label: "Cargas",
+            label: "Shipments",
             data: values,
-            borderColor: "#0f2d52",
-            backgroundColor: "rgba(47,128,237,0.16)",
+            borderColor: "#22d3ee",
+            backgroundColor: "rgba(34,211,238,0.15)",
             tension: 0.35,
             fill: true,
             pointRadius: 4,
-            pointBackgroundColor: "#0f2d52"
+            pointBackgroundColor: "#22d3ee"
           }]
         },
         options: {
@@ -1126,45 +1281,45 @@
       contenedor.innerHTML = `
         ${crearSeccionTabla(
           "pedidos",
-          "Pedidos",
+          "Orders",
           datosFiltrados.pedidos,
           [
-            ["pedido", "Pedido"],
-            ["cliente", "Cliente"],
-            ["comercial", "Comercial"],
-            ["estado", "Estado"],
-            ["fechaPedido", "Fecha pedido"],
-            ["fechaEntrega", "Fecha entrega"],
-            ["importe", "Importe"],
-            ["facturaPendiente", "Factura pendiente"],
-            ["bloqueado", "Bloqueado"]
+            ["pedido", "Order"],
+            ["cliente", "Customer"],
+            ["comercial", "Sales rep"],
+            ["estado", "Status"],
+            ["fechaPedido", "Order date"],
+            ["fechaEntrega", "Delivery date"],
+            ["importe", "Amount"],
+            ["facturaPendiente", "Pending invoice"],
+            ["bloqueado", "Blocked"]
           ]
         )}
 
         ${crearSeccionTabla(
           "expedidos",
-          "Expedidos",
+          "Shipments",
           datosFiltrados.expedidos,
           [
-            ["pedido", "Pedido"],
-            ["cliente", "Cliente"],
-            ["fechaExpedicion", "Fecha expedición"],
-            ["transportista", "Transportista"],
-            ["estadoCarga", "Estado carga"]
+            ["pedido", "Order"],
+            ["cliente", "Customer"],
+            ["fechaExpedicion", "Shipment date"],
+            ["transportista", "Carrier"],
+            ["estadoCarga", "Load status"]
           ]
         )}
 
         ${crearSeccionTabla(
           "reclamaciones",
-          "Reclamaciones",
+          "Claims",
           datosFiltrados.reclamaciones,
           [
             ["id", "ID"],
-            ["cliente", "Cliente"],
-            ["categoria", "Categoría"],
-            ["estado", "Estado"],
-            ["valor", "Valor"],
-            ["fecha", "Fecha"]
+            ["cliente", "Customer"],
+            ["categoria", "Category"],
+            ["estado", "Status"],
+            ["valor", "Value"],
+            ["fecha", "Date"]
           ]
         )}
       `;
@@ -1191,15 +1346,15 @@
               ${columnas.map(([campo]) => `<td>${formatearCelda(campo, item[campo])}</td>`).join("")}
             </tr>
           `).join("")
-        : `<tr><td colspan="${columnas.length}" class="mensaje-vacio">No hay datos para mostrar</td></tr>`;
+        : `<tr><td colspan="${columnas.length}" class="mensaje-vacio">No data to display</td></tr>`;
 
       return `
         <div class="tabla-seccion">
           <div class="tabla-header">
             <h3 class="tabla-title">${titulo}</h3>
             <div class="tabla-controles">
-              <span style="color:var(--gris);font-size:13px;">Registros: ${data.length}</span>
-              <button class="btn-secundario" onclick="exportarCSV('${tipo}')">Exportar CSV</button>
+              <span style="color:var(--gris);font-size:13px;">Records: ${data.length}</span>
+              <button class="btn-secundario" onclick="exportarCSV('${tipo}')">Export CSV</button>
             </div>
           </div>
 
@@ -1221,11 +1376,11 @@
           </div>
 
           <div class="paginacion">
-            <button onclick="cambiarPagina('${tipo}', -1)" ${config.pagina <= 1 ? "disabled" : ""}>Anterior</button>
+            <button onclick="cambiarPagina('${tipo}', -1)" ${config.pagina <= 1 ? "disabled" : ""}>Previous</button>
             <span style="font-size:13px;color:var(--gris);">
-              Página ${config.pagina} de ${totalPaginas}
+              Page ${config.pagina} of ${totalPaginas}
             </span>
-            <button onclick="cambiarPagina('${tipo}', 1)" ${config.pagina >= totalPaginas ? "disabled" : ""}>Siguiente</button>
+            <button onclick="cambiarPagina('${tipo}', 1)" ${config.pagina >= totalPaginas ? "disabled" : ""}>Next</button>
           </div>
         </div>
       `;
@@ -1259,7 +1414,7 @@
     }
 
     function crearBadge(valor) {
-      const texto = String(valor || "Sin dato");
+      const texto = String(valor || "No data");
       const normalizado = normalizarTexto(texto);
 
       let clase = "badge-neutral";
@@ -1268,7 +1423,7 @@
         clase = "badge-ok";
       }
 
-      if (["pendiente", "en progreso", "abierta", "sí", "si", "parcial"].includes(normalizado)) {
+      if (["pendiente", "en progreso", "abierta", "sí", "si", "parcial", "yes"].includes(normalizado)) {
         clase = "badge-warning";
       }
 
@@ -1316,7 +1471,7 @@
       const datos = datosFiltrados[tipo];
 
       if (!datos.length) {
-        alert("No hay datos para exportar.");
+        alert("No data to export.");
         return;
       }
 
